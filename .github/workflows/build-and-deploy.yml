@@ -1,0 +1,79 @@
+name: CI_CD_PRD
+
+# 1
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push events but only for the master branch
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Image version'
+        required: true
+#2
+env:
+  REGISTRY: "registry.digitalocean.com/dcr-samuel"
+  IMAGE_NAME_PAGINA_TESTE: "pagina-teste"
+  IMAGE_NAME_API: "puc-mercadinho-api"
+  IMAGE_NAME_SITE: "puc-mercadinho-site"
+
+#3
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo 
+        uses: actions/checkout@v2
+        
+      - name: Build container image
+        run: docker build -t $(echo $REGISTRY)/$(echo $IMAGE_NAME_SITE):$(echo $GITHUB_SHA | head -c7) .
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+    
+      - name: Log in to DigitalOcean Container Registry with short-lived credentials
+        run: doctl registry login --expiry-seconds 600
+      
+      - name: Remove all old images from other repositories
+        run: if [ ! -z "$(doctl registry repository list | grep "$(echo $IMAGE_NAME_PAGINA_TESTE)")" ]; then doctl registry repository delete-manifest $(echo $IMAGE_NAME_PAGINA_TESTE) $(doctl registry repository list-tags $(echo $IMAGE_NAME_PAGINA_TESTE) | grep -o "sha.*") --force; else echo "No repository"; fi
+      
+      - name: Remove all old images from other repositories
+        run: if [ ! -z "$(doctl registry repository list | grep "$(echo $IMAGE_NAME_API)")" ]; then doctl registry repository delete-manifest $(echo $IMAGE_NAME_API) $(doctl registry repository list-tags $(echo $IMAGE_NAME_API) | grep -o "sha.*") --force; else echo "No repository"; fi
+
+      - name: Remove all old images from other repositories
+        run: if [ ! -z "$(doctl registry repository list | grep "$(echo $IMAGE_NAME_SITE)")" ]; then doctl registry repository delete-manifest $(echo $IMAGE_NAME_SITE) $(doctl registry repository list-tags $(echo $IMAGE_NAME_SITE) | grep -o "sha.*") --force; else echo "No repository"; fi
+
+      - name: Push image to DigitalOcean Container Registry
+        run: docker push $(echo $REGISTRY)/$(echo $IMAGE_NAME_SITE):$(echo $GITHUB_SHA | head -c7)
+       
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build_and_push
+    
+    steps:
+      - name: Deploy to Digital Ocean droplet via SSH action
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          envs: IMAGE_NAME_SITE,REGISTRY,{{ secrets.DIGITALOCEAN_ACCESS_TOKEN }},GITHUB_SHA
+          script: |
+            # Login to registry
+            docker login -u ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }} -p ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }} registry.digitalocean.com
+            # Stop running container
+            docker stop $(echo $IMAGE_NAME_SITE)
+            # Remove old container
+            docker rm $(echo $IMAGE_NAME_SITE)
+            # Run a new container from a new image
+            docker run -dt -p 5002:80 \
+            --restart always \
+            --name $(echo $IMAGE_NAME_SITE) \
+            $(echo $REGISTRY)/$(echo $IMAGE_NAME_SITE):$(echo $GITHUB_SHA | head -c7)            
