@@ -76,4 +76,4 @@ jobs:
             docker run -dt -p 5002:80 \
             --restart always \
             --name $(echo $IMAGE_NAME_SITE) \
-            $(echo $REGISTRY)/$(echo $IMAGE_NAME_SITE):$(echo $GITHUB_SHA | head -c7)            
+            $(echo $REGISTRY)/$(echo $IMAGE_NAME_SITE):$(echo $GITHUB_SHA | head -c7)           
