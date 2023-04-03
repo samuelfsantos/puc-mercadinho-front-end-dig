@@ -6,3 +6,4 @@ WORKDIR /usr/share/nginx/html
 
 # Copy the website files into the container
 COPY ./site
+
