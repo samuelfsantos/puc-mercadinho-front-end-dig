@@ -19,7 +19,7 @@ AJAX Carregar Jogos
 */
 
 function loadGames(){
-    endpoint_principal = (navegacao == true) ? "https://puc-mercadinho-api.herokuapp.com/Produto/listar-todos" : "dados.json";
+    endpoint_principal = (navegacao == true) ? "http://104.248.228.214:5001/Produto/listar-todos" : "dados.json";
 
     let ajax = new XMLHttpRequest();
 
@@ -107,7 +107,7 @@ var btCategoria = function(categoria)
 //card = function ({thumbnail, title, genre, developer, platform,release_date,short_description,game_url}){
 card = function ({nome, img, categoria, descricao, preco, estoque}){
 
-    let produtoUrl = "https://puc-mercadinho-pwa.herokuapp.com/";
+    let produtoUrl = "http://104.248.228.214:5001/";
     let botao = navegacao == true ? `<div class="card-footer"><div class="d-grid gap-2"><a class="btn btn-info" target="_blank" href="${produtoUrl}">Acessar Produto</a></div></div>` : "";
 
     let thumb = navegacao == true ? `<img src="${img}" class="card-img-top">` : `<img src="img/no_img.jpg" class="card-img-top">`;
