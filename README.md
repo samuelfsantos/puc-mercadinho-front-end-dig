@@ -3,12 +3,14 @@
 Projeto contruido para atender uma disciplina durante o curso de pós graduação em Arquitetura de Software Distribuído.
 
 -> Tecnologias utilizadas para a criação do Front-End
-* PWA
+* PWA (Progressive Web App)
 * CSS
 * HTML5
 * Javascript
+* Cache / Funcionamento parcial offline
+* Bootstrap
 
--> Infra
+-> DevOps
 * CI/CD com GitHub Actions
 * Imagem docker (Nginx)
 * Hospedagem no Servidor Digital Ocean
